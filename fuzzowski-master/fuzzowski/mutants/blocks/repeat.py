@@ -6,7 +6,8 @@ from ..mutant import Mutant
 class Repeat(Mutant):
 
     def __init__(self, block_name: str, request: 'Request', min_reps: int = 0, max_reps: int = None,
-                 step: int = 1, variable_name: str = None, include: bool = False, fuzzable: bool = True, name: str = None):
+                 step: int = 1, variable_name: str = None, include: bool = False, fuzzable: bool = True,
+                 name: str = None):
         """
         Repeat the rendered contents of the specified block cycling from min_reps to max_reps counting by step. By
         default renders to nothing. This block modifier is useful for fuzzing overflows in table entries. This block
@@ -49,6 +50,7 @@ class Repeat(Mutant):
             self.variable = self.request.names[variable_name]  # Save target block to repeat
 
         # if a variable is specified, ensure it is an integer type.
+        # 确定是一个整型数据
         if self.variable and not isinstance(self.variable, BitField):
             print(self.variable)
             raise FuzzowskiRuntimeError(
@@ -56,15 +58,18 @@ class Repeat(Mutant):
             )
 
         # ensure the user specified either a variable to tie this repeater to or a min/max val.
+        # 确保用户指定给repeater的要么是一个变量要么是最小最大值
         if self.variable is None and self.max_reps is None:
             raise FuzzowskiRuntimeError(
                 "Repeater for block %s doesn't have a min/max or variable binding!" % self.block_name
             )
 
         # if not binding variable was specified, propagate the fuzz library with the repetition counts.
+        # 如果没有指定变量，那么便使用重复计数生成fuzz库
         if not self.variable:
             self._mutations = range(self.min_reps, self.max_reps + 1, self.step)
         # otherwise, disable fuzzing as the repetition count is determined by the variable.
+        # 否则，由于指定了变量，那么取消重复计数。
         else:
             self._fuzzable = False
         self._disabled = False
@@ -72,13 +77,17 @@ class Repeat(Mutant):
     def _mutate(self):
         """
         Modifies the Mutant
+        修改突变
         Set the mutant to the next mutation, increasing the mutant_index and upgrading the value
+
         Returns: True if it was mutated correctly, false if there are no mutations left or the mutant is
+                如果突变正确，那么为真，如果没有剩余或者突变。。。。
         """
         ret_value = super()._mutate()
 
         if ret_value is True:
             # If the variable is set, it will repeat variable times
+            # 如果设置了variable，那么便会循环variable次
             if self.variable:
                 num_repeats = max(0, self.variable._value - 1) if self.include else self.variable._value
                 self._value = num_repeats * self.block.render()

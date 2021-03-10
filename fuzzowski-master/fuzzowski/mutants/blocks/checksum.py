@@ -17,13 +17,13 @@ def _may_recurse(f):
         self._recursion_flag = True
         result = f(self, *args, **kwargs)
         self._recursion_flag = False
+        # 第一次赋值，将flag内容由result返回，第二次在以后会用到
         return result
 
     return safe_recurse
 
 
 class Checksum(Mutant):
-
     checksum_lengths = {
         "crc32": 4,
         "adler32": 4,
@@ -77,12 +77,13 @@ class Checksum(Mutant):
             self._length = self.checksum_lengths[self._algorithm]
 
         # Edge cases and a couple arbitrary strings (all 1s, all Es)
+        # TODO:此处大概是进行变化的源头。
         self._mutations = [b'\x00' * self._length,
-                              b'\x11' * self._length,
-                              b'\xEE' * self._length,
-                              b'\xFF' * self._length,
-                              b'\xFF' * (self._length - 1) + b'\xFE',
-                              b'\x00' * (self._length - 1) + b'\x01']
+                           b'\x11' * self._length,
+                           b'\xEE' * self._length,
+                           b'\xFF' * self._length,
+                           b'\xFF' * (self._length - 1) + b'\xFE',
+                           b'\x00' * (self._length - 1) + b'\x01']
 
         if self._algorithm == 'udp':
             if not self._ipv4_src_block_name:
@@ -105,7 +106,7 @@ class Checksum(Mutant):
             self._rendered = replace_value
         if self._should_render_fuzz_value():
             self._rendered = self._value
-        elif self._recursion_flag:
+        elif self._recursion_flag:  # 在result中返回的flag标志位
             self._rendered = self._get_dummy_value()
         else:
             self._rendered = self._checksum(data=self._render_block(self._block_name),
@@ -124,12 +125,16 @@ class Checksum(Mutant):
             raise FuzzowskiRuntimeError(f'Checksum output format not supported: {self._output_format}')
 
     def _should_render_fuzz_value(self):
-        return self._fuzzable and (self._mutant_index != 0) and not self._fuzz_complete
+        return self._fuzzable and (self._mutant_index != 0) and not self._fuzz_complete  # 不为0并且未完成
 
     def _get_dummy_value(self):
+        # #
+        # if not self._length and self._algorithm in self.checksum_lengths.keys():
+        #     self._length = self.checksum_lengths[self._algorithm]
+        # length的初始赋值 ，可见此时其与下边的return是等价的。
         if self._length:
             return self._length * b'\x00'
-        return self.checksum_lengths[self._algorithm] * b'\x00'
+        return self.checksum_lengths[self._algorithm] * b'\x00'  # 仅仅返回长度长的\x00
 
     @_may_recurse
     def _render_block(self, block_name):
