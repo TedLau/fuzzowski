@@ -90,6 +90,8 @@ class Repeat(Mutant):
             # 如果设置了variable，那么便会循环variable次
             if self.variable:
                 num_repeats = max(0, self.variable._value - 1) if self.include else self.variable._value
+                # repeat的次数，如果被包含，那么便在0和variable-1中取一个最大值。否则就直接赋值
+                # TODO:留下疑问。
                 self._value = num_repeats * self.block.render()
             else:
                 num_repeats = self._value  # Mutate will take self._mutations[self.mutant_index]
