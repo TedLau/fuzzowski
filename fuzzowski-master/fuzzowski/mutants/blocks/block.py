@@ -8,7 +8,7 @@ class Block(Mutant):
                  dep: str = None, dep_value: object = None, dep_values: List = None, dep_compare: str = "=="):
         """
         The basic building block. Can contain primitives, sizers, checksums or other blocks (any Mutant).
-
+        基本的构建块。可以包含原语、大小、校验和或其他块(任何突变体)
         Args:
             name:           Name of the new block
             request:        Request this block belongs to
@@ -33,6 +33,7 @@ class Block(Mutant):
         self._rendered = ""  # rendered block contents.
         self._fuzzable = True  # blocks are always fuzzable because they may contain fuzzable items.
         self.group_idx = 0  # if this block is tied to a group, the index within that group.
+        # 如果一个块绑定到了一个组，那么这个下标将会写入对应的组
         self._fuzz_complete = False  # whether or not we are done fuzzing this block.
         self._mutant_index = 0  # current mutation index.
         self._disabled = False  # Blocks cannot be disabled
@@ -76,12 +77,14 @@ class Block(Mutant):
         # TODO: 这是他们以后要完成的事情，表明这个项目在这里需要改进. 如果一个组被连接，对该组的每个突变重复上述过程
 
         # After finishing, update Request removing the mutant
+        # 完成之后，移除变体并更新Request
         self.request.mutant = None
         self.reset()
 
     def render(self, replace_node: str = None, replace_value: bytes = None, original: bool = False) -> bytes:
         """
         Step through every item on this blocks stack and render it. Subsequent blocks recursively render their stacks.
+        逐个测试每一个块堆栈并渲染，接下来递归呈现其堆栈
         """
         self._rendered = b""
 
@@ -91,25 +94,34 @@ class Block(Mutant):
 
         #
         # if this block is dependant on another field and the value is not met, render nothing.
+        # 如果该堆块依赖于其他于并且是新值，便不进行渲染
         # TODO: dep related code left for compatibility, not totally sure when to use this
+        # 　TODO: 为了兼容，留下dep相关代码，即如下代码。但不清楚何时会用到，我也不知道。。。。
         if self.dep:
             return self._render_dep()
 
         # Otherwise, render and encode as usual.
+        # 否则，像往常一样进行渲染并编码
         for item in self.stack:
             self._rendered += item.render(replace_node=replace_node, replace_value=replace_value, original=original)
 
         # add the completed block to the request dictionary.
+        # 将完成的block加入至请求字典中。
         # TODO: Is this necessary?
         # self.request.closed_blocks[self.name] = self
 
         # if an encoder was attached to this block, call it.
+        # 如果一个编码器被附着在区块，调用它。
         if self.encoder:
             self._rendered = self.encoder(self._rendered)
 
         return self._rendered
 
     def _render_dep(self):
+        """
+        等于便比较不等于，不等于便比较等于 ...都置空，返回岂不是一样的。。。self._rendered = b""
+        :return: self._rendered
+        """
         if self.dep_compare == "==":
             if self.dep_values and self.request.names[self.dep]._value not in self.dep_values:
                 self._rendered = b""
@@ -148,7 +160,7 @@ class Block(Mutant):
     def num_mutations(self):
         """
         Determine the number of repetitions we will be making.
-
+        确定我们要重复的次数
         @rtype:  int
         @return: Number of mutated forms this primitive can take.
         """
@@ -169,12 +181,14 @@ class Block(Mutant):
     def push(self, item: Mutant):
         """
         Push an arbitrary item onto this blocks stack.
+        往块堆栈中压入一个任意的item
         """
         self.stack.append(item)
 
     def reset(self):
         """
         Reset the primitives on this blocks stack to the starting mutation state.
+        重置该区块栈上的原语至起始突变状态
         """
         self.goto(0)
 
@@ -190,6 +204,7 @@ class Block(Mutant):
                 item.reset()
 
     def goto(self, mutant_index: int):
+        # goto超过了已存在的数量
         if mutant_index > self.num_mutations:
             raise FuzzowskiRuntimeError(f"Mutant tried to get mutation "
                                         f"{mutant_index} > num_mutations ({self.num_mutations})")
@@ -198,6 +213,7 @@ class Block(Mutant):
             self._mutation_gen = self._mutation_generator()
         else:
             # Iterate through mutations until reaching the desired mutant_index
+            # 迭代越过直至达到想要的下标。 即在goto过程中，一直执行next直至goto后的参数
             self.reset()
             i = 0
             self._mutation_gen = self._mutation_generator()
