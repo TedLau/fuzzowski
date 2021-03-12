@@ -57,6 +57,7 @@ class Response(object, metaclass=ABCMeta):
     def _check_vars(self, vars_set: Mapping[str, bytes]):
         """
         Checks that all required vars were set by the last time _extract_variables() was called
+        检查上次调用_extract_variables()时是否设置了所有所需的vars
         Raises FuzzowskiRuntimeError if a required_var was not set by _extract_variables()
         """
         for var in self.required_vars:
@@ -67,6 +68,7 @@ class Response(object, metaclass=ABCMeta):
     def _set_vars(self, vars_set: Mapping[str, bytes]):
         """
         Set the variables passed as argument in the global mutants.blocks.VARIABLES
+        在全局mutants.blocks.VARIABLES中设置作为参数传递的变量
         Args:data
             vars_set: The variables
         """
@@ -75,6 +77,7 @@ class Response(object, metaclass=ABCMeta):
     def _empty_vars(self):
         """
         Set all vars of this Response to None
+        将响应中的所有变量设为None
         """
         for var in self.required_vars + self.optional_vars:
             blocks.VARIABLES[var] = None

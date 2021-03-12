@@ -20,6 +20,6 @@ class Word(BitField):
         aux_value = value
         if type(aux_value) not in [int, list, tuple]:
             assert len(aux_value) == 2, "Word value length must be 2!"
-            aux_value = struct.unpack(LITTLE_ENDIAN + "H", aux_value)[0]
+            aux_value = struct.unpack(LITTLE_ENDIAN + "H", aux_value)[0]  # 小端，并且后缀补充H
 
         super(Word, self).__init__(aux_value, width, max_num, *args, **kwargs)

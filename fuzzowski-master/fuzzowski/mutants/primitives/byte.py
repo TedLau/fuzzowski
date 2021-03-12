@@ -21,6 +21,6 @@ class Byte(BitField):
         aux_value = value
         if type(aux_value) not in [int, list, tuple]:
             assert len(aux_value) == 1, "Byte value length must be 1!"
-            aux_value = struct.unpack(LITTLE_ENDIAN + "B", aux_value)[0]
+            aux_value = struct.unpack(LITTLE_ENDIAN + "B", aux_value)[0]  # BIG ENDIAN
 
         super(Byte, self).__init__(aux_value, width, max_num, *args, **kwargs)

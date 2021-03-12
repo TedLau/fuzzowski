@@ -8,11 +8,14 @@ from ...constants import LITTLE_ENDIAN
 def binary_string_to_int(binary: Union[bytes, str]) -> int:
     """
     Convert a binary string to a decimal number.
+    将二进制串转为十进制数
     Args:
         binary: Binary string
 
     Returns:
         int: Converted bit string
+        int('1111',2)
+        15
     """
     return int(binary, 2)
 
@@ -99,7 +102,7 @@ class BitField(Mutant):
         self.full_range = full_range
         self._fuzzable = fuzzable
         self._name = name
-        self.cyclic_index = 0         # when cycling through non-mutating values
+        self.cyclic_index = 0  # when cycling through non-mutating values
 
         self._mutations = list(mutations)
         self._mutation_gen = self.mutation_generator()
@@ -107,7 +110,7 @@ class BitField(Mutant):
 
         if not self.max_num:
             self.max_num = binary_string_to_int("1" + "0" * width)
-        assert isinstance(self.max_num, (int, )), "max_num must be an integer!"
+        assert isinstance(self.max_num, (int,)), "max_num must be an integer!"
 
         if self.full_range:
             # add all possible values.
@@ -116,6 +119,8 @@ class BitField(Mutant):
         else:
             if len(mutations) == 0:
                 # try only "smart" values.
+                # 仅尝试一些指定的值
+                # TODO:需要搞懂是用来做什么的
                 self.add_integer_boundaries(0)
                 self.add_integer_boundaries(self.max_num // 2)
                 self.add_integer_boundaries(self.max_num // 3)
@@ -134,13 +139,14 @@ class BitField(Mutant):
     def add_integer_boundaries(self, integer):
         """
         Add the supplied integer and border cases to the integer fuzz heuristics library.
-
+        将提供的整数和边界情况添加到整数模糊启发法库。
         Args:
             integer: int to append to fuzz heuristics
         """
         for i in range(-10, 10):
             case = integer + i
             # ensure the border case falls within the valid range for this field.
+            # 确保边界情况落入该字段的有效范文内。
             if 0 <= case < self.max_num:
                 if case not in self._mutations:
                     self._mutations.append(case)
@@ -148,7 +154,8 @@ class BitField(Mutant):
     def _render(self, value: int):
         # TODO: Fix UnicodeDecodeError while rendering int.
         try:
-            rendered = self.render_int(value, output_format=self.format, bit_width=self.width, endian=self.endian, signed=self.signed)
+            rendered = self.render_int(value, output_format=self.format, bit_width=self.width, endian=self.endian,
+                                       signed=self.signed)
         except UnicodeDecodeError:
             rendered = self._original_value
         return rendered
@@ -157,6 +164,7 @@ class BitField(Mutant):
     def render_int(value, output_format, bit_width, endian, signed):
         """
         Convert value to a bit or byte string.
+        将数值转为一个位或者字节字符串。
 
         Args:
             value (int): Value to convert to a byte string.
@@ -186,7 +194,7 @@ class BitField(Mutant):
                 chunk = bit_stream[chunk_min:chunk_max]
                 # print(chunk)
                 # print(struct.pack("B", binary_string_to_int(chunk)))
-                rendered += struct.pack("B", binary_string_to_int(chunk))#.decode()
+                rendered += struct.pack("B", binary_string_to_int(chunk))  # .decode()
 
             # if necessary, convert the endianness of the raw bytes.
             if endian == LITTLE_ENDIAN:
@@ -224,5 +232,3 @@ class BitField(Mutant):
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.render())
-
-

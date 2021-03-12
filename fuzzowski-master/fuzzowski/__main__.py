@@ -52,6 +52,7 @@ class Fuzzowski(object):
 
         # Create session
         if self.args.protocol == 'telnet':  # TODO: Set this automatically from fuzzers without modifying main program!
+            # TODO: 意思是从fuzzer包来进行设置，而并非在main程序中改变
             self.target = Target(connection=TelnetConnection(self.args.host,
                                                              port=self.args.port,
                                                              timeout=self.args.recv_timeout,
@@ -66,8 +67,8 @@ class Fuzzowski(object):
                                                              bind=self.args.bind,
                                                              send_timeout=self.args.send_timeout,
                                                              recv_timeout=self.args.recv_timeout
-                                                             )
-                             )
+                                                             )  # Socket的参数
+                                 )
 
         self.session = Session(session_filename=self.session_filename,
                                sleep_time=self.args.sleep_time,
@@ -115,6 +116,7 @@ class Fuzzowski(object):
         """
 
         # This parser0 is a little parser to be able to append fuzzer modules with include before
+        # 这个parser0是一个小型的解析器，它能够在前面附加包含的fuzzer模块
         parser0 = argparse.ArgumentParser(usage=argparse.SUPPRESS, add_help=False)
         parser0.add_argument('-i', dest="include", nargs='+', help="Include modules from path[s]")
         args0, others = parser0.parse_known_args()
@@ -123,56 +125,68 @@ class Fuzzowski(object):
                 self.import_modules_from_path(path)
 
         self.parser = argparse.ArgumentParser(
-            description= logo ,
+            description=logo,
             formatter_class=argparse.RawTextHelpFormatter)
 
-        self.parser.add_argument("host", help="Destination Host")
-        self.parser.add_argument("port", type=int, help="Destination Port")
-        conn_grp = self.parser.add_argument_group('Connection Options')
+        self.parser.add_argument("host", help="Destination Host")  # 主机
+        self.parser.add_argument("port", type=int, help="Destination Port")  # 端口
+        conn_grp = self.parser.add_argument_group('Connection Options')  # 链接选项
         conn_grp.add_argument("-p", "--protocol", dest="protocol", help="Protocol (Default tcp)", default='tcp',
-                              choices=['tcp', 'udp', 'ssl'])
-        conn_grp.add_argument("-b", "--bind", dest="bind", type=int, help="Bind to port")
+                              choices=['tcp', 'udp', 'ssl'])  # p 代表协议 默认tcp，可选 tcp udp ssl
+        conn_grp.add_argument("-b", "--bind", dest="bind", type=int, help="Bind to port")  # b 绑定端口
         conn_grp.add_argument("-st", "--send_timeout", dest="send_timeout", type=float, default=5.0,
-                              help="Set send() timeout (Default 5s)")
+                              help="Set send() timeout (Default 5s)")  # st 发送超时。默认五秒
         conn_grp.add_argument("-rt", "--recv_timeout", dest="recv_timeout", type=float, default=5.0,
-                              help="Set recv() timeout (Default 5s)")
+                              help="Set recv() timeout (Default 5s)")  # rt 接收超时。 默认五秒
         conn_grp.add_argument("--sleep-time", dest="sleep_time", type=float, default=0.0,
-                              help="Sleep time between each test (Default 0)")
+                              help="Sleep time between each test (Default 0)")  # 睡眠时间，默认不睡。
         conn_grp.add_argument('-nc', '--new-conns', dest='new_connection_between_requests',
                               help="Open a new connection after each packet of the same test",
-                              action='store_true')
+                              action='store_true')  # nc 新链接，在请求之间建立 在每一个相同测试用例后简历一个新的连接
         conn_grp.add_argument('-tn', '--transmit_full_path', dest='transmit_full_path',
                               help="Transmit the next node in the graph of the fuzzed node",
-                              action='store_true')
+                              action='store_true')  # tn 发送被模糊节点图中的下一个节点
         recv_grp = self.parser.add_argument_group('RECV() Options')
         recv_grp.add_argument('-nr', '--no-recv', dest='receive_data_after_each_request',
                               help="Do not recv() in the socket after each send",
-                              action='store_false')
+                              action='store_false')  # 不在每一次发送后接收
         recv_grp.add_argument('-nrf', '--no-recv-fuzz', dest='receive_data_after_fuzz',
                               help="Do not recv() in the socket after sending a fuzzed request",
-                              action='store_false')
+                              action='store_false')  # 在发送模糊请求后不接收返回的套接字
         recv_grp.add_argument('-cr', '--check-recv', dest='check_data_received_each_request',
                               help="Check that data has been received in recv()",
-                              action='store_true')
+                              action='store_true')  # 检查刚刚接收的数据
 
         crash_grp = self.parser.add_argument_group('Crashes Options')
         crash_grp.add_argument("--threshold-request", dest="crash_threshold_request", type=int, default=9999,
                                help="Set the number of allowed crashes in a Request before skipping it (Default 9999)")
+        # 在跳过请求之前，设置允许崩溃的数量(默认为9999)
         crash_grp.add_argument("--threshold-element", dest="crash_threshold_element", type=int, default=3,
                                help="Set the number of allowed crashes in a Primitive before skipping it (Default 3)")
+        # 在跳过原语之前设置允许崩溃的数量(默认为3)
+        # 此处是在对同一个目标进行fuzz时，对于单个原语的尝试次数。
+        # TODO:大约可以这么理解，对于一个功能码的整个fuzz属于是一个请求，而在这一个请求中，我们使用多个原语进行fuzz
+        # TODO:请求中包含原语，请求失败，约可以理解为，使用同一堆原语的各种变化对齐进行fuzz多次，总次数不超过9999，即可以认为
+        # TODO:每一个请求可以测试9999次原语，每一个原语有三次测试机会。
+
         crash_grp.add_argument('--error-fuzz-issues', dest='ignore_connection_issues_after_fuzz',
                                help="Log as error when there is any connection issue in the fuzzed node",
                                action='store_true')
+        # 当模糊节点中有任何连接问题时，将日志记录为错误。
 
         fuzz_grp = self.parser.add_argument_group('Fuzz Options')
         fuzz_grp_opts = fuzz_grp.add_mutually_exclusive_group()
         fuzz_grp_opts.add_argument('-c', '--callback', dest='callback',
-                              default=None,
-                              help="Set a callback address to fuzz with callback generator instead of normal mutations")
+                                   default=None,
+                                   help="Set a callback address to fuzz with callback generator instead of normal mutations")
+        # 设置回调地址模糊回调生成器而不是普通的突变
+
         fuzz_grp_opts.add_argument('--file', dest='filename', help='Use contents of a file for fuzz mutations')
+        # 使用文件的内容进行模糊突变  即，用户可以指定用来fuzz的内容。
 
         fuzzers = [fuzzer_class.name for fuzzer_class in IFuzzer.__subclasses__()] + ['raw']
         protocols_help = 'Requests of the protocol to fuzz, default All\n'
+        # 默认情况下，用来进行fuzz请求中的协议。
         for fuzzer_protocol in IFuzzer.__subclasses__():
             methods = ', '.join([req.__name__ for req in fuzzer_protocol.get_requests()])
             protocols_help += '  {}: [{}]\n'.format(fuzzer_protocol.name, methods)
@@ -194,7 +208,8 @@ class Fuzzowski(object):
         restarters_grp.add_argument("--restart-sleep", dest="restart_sleep_time", type=int, default=5,
                                     help='Set sleep seconds after a crash before continue (Default 5)')
 
-        monitor_classes = [monitor_class for monitor_class in IMonitor.__subclasses__() if monitor_class != IThreadMonitor]
+        monitor_classes = [monitor_class for monitor_class in IMonitor.__subclasses__() if
+                           monitor_class != IThreadMonitor]
         monitor_names = [monitor.name() for monitor in monitor_classes]
         monitors_grp = self.parser.add_argument_group('Monitor options')
         monitors_help = 'Monitor Modules:\n'
@@ -276,10 +291,10 @@ class Fuzzowski(object):
                 print(f"The restarter module {args.restart[0]} does not exist!")
                 exit(1)
 
-
         self.monitors = []
         if len(args.monitors) > 0:
-            self.monitors = [mon for mon in IMonitor.__subclasses__() if mon != IThreadMonitor and mon.name() in args.monitors]
+            self.monitors = [mon for mon in IMonitor.__subclasses__() if
+                             mon != IThreadMonitor and mon.name() in args.monitors]
 
         return args
 
@@ -346,7 +361,7 @@ class Fuzzowski(object):
                 if Fuzzowski.base_value_pattern.match(block_split):
                     # Base Value inside, add String
                     base_value = Fuzzowski.base_value_pattern.match(block_split).groups()[0]
-                    #s_string(base_value, name='{}_{}'.format(base_value, str_i))
+                    # s_string(base_value, name='{}_{}'.format(base_value, str_i))
                     s_string(base_value)
                     str_i += 1
                 else:
@@ -381,6 +396,7 @@ class Fuzzowski(object):
         else:
             print(f'The path {path} is not valid')
             exit(1)
+
 
 # --------------------------------------------------------------- #
 

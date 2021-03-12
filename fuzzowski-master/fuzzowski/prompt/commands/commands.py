@@ -1,9 +1,9 @@
 COMMANDS = {
-    'print' : {
+    'print': {
         'desc': 'print args',
-        'exec' : print,
+        'exec': print,
     },
-    'quit' : {
+    'quit': {
         'desc': 'Exit the program',
     },
     'exit': {
@@ -13,3 +13,5 @@ COMMANDS = {
         'desc': 'Continue with the execution of the program',
     },
 }
+
+# quit7 exit continue命令行

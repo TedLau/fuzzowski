@@ -5,7 +5,8 @@ from fuzzowski.exception import FuzzowskiRuntimeError
 
 
 class RegexResponse(Response):
-    """The Response object contains methods to parse the request, set the variables found and print the response"""
+    """The Response object contains methods to parse the request, set the variables found and print the response
+        Response对象包含解析请求、设置找到的变量和打印响应的方法"""
     def __init__(self, name: str, required_vars: List[str], optional_vars: List[str], regex_list: List[bytes],
                  regex_args: List = ()):
         super().__init__(name, required_vars, optional_vars)

@@ -23,7 +23,7 @@ class Size(BitField):
         """
         Create a sizer block bound to the block with the specified name. Size blocks that size their own parent or
         grandparent are allowed.
-
+        创建一个绑定到指定名称块的筛选块，。。。
         Args:
             block_name:     Name of block to apply sizer to
             request:        Request this block belongs to
@@ -98,8 +98,10 @@ class Size(BitField):
     def _render_replaced_value(self, replaced_value: bytes) -> bytes:
         """
         Render the length of the replaced_value passed as argument, taking other parameters into account
+        将replace_value的长度作为参数传递，附带考虑其他的参数。
         Args:
             replaced_value: value to calculate the length
+            replaced_value: 将要被计算长度的值
 
         Returns: The length in rendered format of the replaced_value
 
@@ -111,6 +113,7 @@ class Size(BitField):
     def _inclusive_length_of_self(self) -> int:
         """
         Returns: the length of self or zero if inclusive flag is False.
+                自己或者如果flag是False就返回0
         """
         if self.inclusive:
             return self.length
@@ -128,11 +131,13 @@ class Size(BitField):
     def _length_of_target_block(self) -> int:
         """
         Calculate the length of target block, including mutations if it is currently mutated.
-
+        计算目标块的长度，包括单钱正在变异的突变体
         Returns: the length of the actual mutation of the target block
+        返回的是目标块的实际长度。
         """
         # length = len(self.request.names[self.block_name])
-        length = int(len(self.request.get_mutant(self.block_name)))
+        length = int(len(self.request.get_mutant(self.block_name)))  # 通过get_mutant方法，给其传递name参数以便获得实际的request中的block
+
         return length
 
     @property
@@ -148,7 +153,7 @@ class Size(BitField):
     def _original_length_of_target_block(self) -> int:
         """
         Calculates the length of original value of the target block.
-
+        计算目标块的初始值
         Returns: the length of the original_value of the target block
         """
         # length = len(self.request.names[self.block_name].original_value)
@@ -159,10 +164,11 @@ class Size(BitField):
     def _get_dummy_value(self) -> bytes:
         """
         Return a dummy value, for the cases when we enter in a recursion loop while rendering to calculate lengths
+        返回一个假值，为了当我们进入递归时计算长度
 
         Returns: A dummy value
         """
-        # TODO: If the output_format is ascii this could render a wrong size?
+        # TODO: If the output_format is ascii this could render a wrong size?  假值有何用。。。
         return self.length * b'\x00'
 
     def __len__(self) -> int:

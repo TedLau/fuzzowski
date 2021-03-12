@@ -5,7 +5,8 @@ class Delim(Mutant):
     def __init__(self, value, fuzzable: bool = True, name: str = None):
         """
         Represent a delimiter such as :,\r,\n, ,=,>,< etc... Mutations include repetition, substitution and exclusion.
-        
+        表示一个分隔符，例如:，\r，\n，，=，>，<等…突变包括重复、替代和排除
+        大约表示突变数组中的变化。
         Args:
             value:      Original value
             fuzzable:   (Optional, def=True) Enable/disable fuzzing of this primitive

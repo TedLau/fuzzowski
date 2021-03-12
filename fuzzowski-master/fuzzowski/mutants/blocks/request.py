@@ -124,6 +124,7 @@ class Request(Block):
                 raise FuzzowskiRuntimeError(f'Invalid path name: {path_name}. Mutant {m["mutant"]} not found')
 
     def add_response(self, response: Response):
+        # 在response队列中追加当前的response
         if response not in self.responses:
             self.responses.append(response)
 

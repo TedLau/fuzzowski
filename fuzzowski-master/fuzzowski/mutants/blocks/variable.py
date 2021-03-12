@@ -7,6 +7,7 @@ class Variable(Mutant):
     def __init__(self, name: str, request: Request, value: bytes, fuzzable: bool = False):
         """
         A variable that takes the value of a variable set in the request
+        一个携带我们在请求中设置的变量的值
 
         Args:
             name:       Name of the variable block, it is also used to set the variable

@@ -7,6 +7,8 @@ class DWord(BitField):
     def __init__(self, value: bytes, *args, **kwargs):
         """
         DWord is a 4 Bytes sized BitField
+        DWord 是4字节的
+
 
         Args:
             value:      byte value (len 4)
